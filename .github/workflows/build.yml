@@ -112,11 +112,11 @@ jobs:
           labels: base_image=${{ env.BASE_ID }}
           load: true
           push: false
-          provenance: ${{ contains(env.REGISTRY, 'docker') }}
           tags: ${{ env.IMAGE_TAG }}
+          provenance: ${{ contains(env.REGISTRY, 'docker') }}
           platforms: linux/amd64,linux/arm64/v8
           build-args: |
-            alpine_tag=${{ steps.prepare.outputs.alpine_tag }}
+            alpine_tag=${{ env.VERSION_ID }}
 
       - name: Push ${{ env.VERSION_ID }} to ${{ env.REGISTRY }}/${{ env.REPOSITORY }}
         if: steps.build_image.outcome == 'success' && needs.select.outputs.push == 'true'
@@ -130,4 +130,4 @@ jobs:
           provenance: ${{ contains(env.REGISTRY, 'docker') }}
           platforms: linux/amd64,linux/arm64/v8
           build-args: |
-            alpine_tag=${{ steps.prepare.outputs.alpine_tag }}
+            alpine_tag=${{ env.VERSION_ID }}
