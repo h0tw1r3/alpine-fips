@@ -25,7 +25,7 @@ RUN abuild deps
 RUN abuild fetch
 RUN abuild unpack
 RUN abuild prepare
-RUN abuild build
+RUN abuild build | perl -p -e '$|++; s/^(gcc ).* (\S+)$/\1\2/'
 
 USER root
 RUN cd src/openssl-* \
