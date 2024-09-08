@@ -1,0 +1,13 @@
+modifies make target to support building and installing just the fips provider
+
+--- a/Configurations/unix-Makefile.tmpl
++++ b/Configurations/unix-Makefile.tmpl
+@@ -658,7 +659,7 @@
+ 	$(RM) -r "$(DESTDIR)$(DOCDIR)"
+ 
+ {- output_off() if $disabled{fips}; "" -}
+-install_fips: build_sw $(INSTALL_FIPSMODULECONF)
++install_fips: build_generated providers/fips.so $(INSTALL_FIPSMODULECONF)
+ 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(MODULESDIR)"
+ 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(OPENSSLDIR)"

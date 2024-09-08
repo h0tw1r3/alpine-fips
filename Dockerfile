@@ -2,7 +2,7 @@ ARG alpine_tag=latest
 
 FROM alpine:${alpine_tag} AS build
 
-RUN apk add --no-cache alpine-sdk doas \
+RUN apk add --no-cache alpine-sdk doas openssl \
     && echo 'permit nopass :wheel' >> /etc/doas.conf
 
 RUN adduser -D build \
@@ -20,16 +20,20 @@ RUN source /etc/os-release ; \
     && git checkout
 
 WORKDIR /home/build/aports/main/openssl
-RUN sed -i 's/^\(.*\)enable-ktls \(.*\)$/&\n\1enable-fips \2/' APKBUILD
+RUN sed -r -i -e 's@^(\s*)enable-ktls (.*)$@&\n\1enable-fips \2@' \
+              -e 's@^(\s*)make$@\1make build_generated providers/fips.so@' \
+              -e 's@^\s*make test$@@' APKBUILD
 RUN abuild deps
 RUN abuild fetch
 RUN abuild unpack
 RUN abuild prepare
+COPY fips-only.patch .
+RUN cd src/openssl-* && patch -p1 < ../../fips-only.patch
 RUN abuild build | perl -p -e '$|++; s/^(gcc ).* (\S+)$/\1\2/'
 
 USER root
 RUN cd src/openssl-* \
-    && make install_sw install_ssldirs install_fips
+    && make install_fips
 
 RUN sed \
       -e 's@^# \(.include \)\(fipsmodule.cnf\)@\1 /etc/ssl/\2@' \
