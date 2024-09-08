@@ -21,7 +21,7 @@ RUN source /etc/os-release ; \
 
 WORKDIR /home/build/aports/main/openssl
 RUN sed -i 's/^\(.*\)enable-ktls \(.*\)$/&\n\1enable-fips \2/' APKBUILD
-RUN abuild deps
+RUN doas abuild -F deps
 RUN abuild fetch
 RUN abuild unpack
 RUN abuild prepare
