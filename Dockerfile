@@ -13,8 +13,8 @@ RUN adduser -D build \
 USER build
 
 WORKDIR /home/build
-RUN source /etc/os-release && \
-    git clone -n --depth=1 --filter=tree:0 https://github.com/alpinelinux/aports.git --branch v\${VERSION_ID} \
+RUN source /etc/os-release \
+    && git clone -n --depth=1 --filter=tree:0 https://github.com/alpinelinux/aports.git --branch v\${VERSION_ID} \
     && cd aports \
     && git sparse-checkout set --no-cone main/openssl \
     && git checkout
