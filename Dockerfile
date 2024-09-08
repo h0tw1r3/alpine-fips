@@ -1,19 +1,20 @@
-ARG alpine_tag=3.20.2
+ARG alpine_tag=3.20.3
 
 FROM alpine:${alpine_tag} AS build
-ARG alpine_tag
 
 RUN apk add --no-cache alpine-sdk doas \
     && echo 'permit nopass :wheel' >> /etc/doas.conf
 
 RUN adduser -D build \
     && addgroup build abuild \
-    && addgroup build wheel
+    && addgroup build wheel \
+    && sync
 
 USER build
 
 WORKDIR /home/build
-RUN git clone -n --depth=1 --filter=tree:0 https://gitlab.alpinelinux.org/alpine/aports --branch v${alpine_tag} \
+RUN source /etc/os-release && \
+    git clone -n --depth=1 --filter=tree:0 https://github.com/alpinelinux/aports.git --branch v\${VERSION_ID} \
     && cd aports \
     && git sparse-checkout set --no-cone main/openssl \
     && git checkout
