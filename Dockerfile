@@ -1,4 +1,4 @@
-ARG alpine_tag=3.20.3
+ARG alpine_tag=latest
 
 FROM alpine:${alpine_tag} AS build
 
