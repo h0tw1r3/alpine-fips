@@ -84,9 +84,9 @@ jobs:
 
       - name: Setup Containerd image store
         if: steps.compare_image.outputs.need_refresh || steps.compare_image.outcome == 'skipped'
-        uses: crazy-max/ghaction-setup-docker@v2
+        uses: crazy-max/ghaction-setup-docker@v3
         with:
-          version: v24.0.6
+          version: v27.1.1
           daemon-config: '{ "features": { "containerd-snapshotter": true } }'
 
       - name: Setup QEMU
