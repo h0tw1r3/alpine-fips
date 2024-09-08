@@ -50,8 +50,17 @@ jobs:
       packages: write
     runs-on: ubuntu-latest
     steps:
+      - name: Prepare
+        id: prepare
+        run: |
+          if [ "${{ inputs.alpine_tag }}" == "latest" ] ; then
+            git ls-remote --no-refs --tags https://github.com/alpinelinux/aports.git | \
+              sed -r -n 's@.*refs/tags/v([0-9]+\.[0-9]+\.[0-9]+).*@\1@p' | sort -Vu | tail -1 | cat <(echo -n 'alpine_tag=') - >> $GITHUB_OUTPUT
+          else
+            echo "alpine_tag=${{ inputs.alpine_tag }}" >> $GITHUB_OUTPUT
+          fi
       - name: Login to ${{ env.REGISTRY }}
-        if: needs.select.outputs.push == 'true'
+        if: inputs.push == true
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -60,8 +69,8 @@ jobs:
 
       - name: Set variables
         run: |
-          echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ inputs.alpine_tag }}" >> $GITHUB_ENV
-          echo "PULL_IMAGE=docker.io/alpine:${{ inputs.alpine_tag }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ steps.prepare.outputs.alpine_tag }}" >> $GITHUB_ENV
+          echo "PULL_IMAGE=docker.io/alpine:${{ steps.prepare.outputs.alpine_tag }}" >> $GITHUB_ENV
 
       - name: Pull image
         run: |
@@ -84,11 +93,6 @@ jobs:
           fi
           echo "need_refresh=true" >> $GITHUB_OUTPUT
 
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
       - name: Setup Containerd image store
         if: steps.compare_image.outputs.need_refresh || steps.compare_image.outcome == 'skipped'
         uses: crazy-max/ghaction-setup-docker@v2
@@ -104,6 +108,11 @@ jobs:
         if: steps.compare_image.outputs.need_refresh || steps.compare_image.outcome == 'skipped'
         uses: docker/setup-buildx-action@v3
         
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Build
         if: steps.compare_image.outputs.need_refresh || steps.compare_image.outcome == 'skipped'
         id: build_image
@@ -118,7 +127,7 @@ jobs:
           tags: ${{ env.IMAGE_TAG }}
           platforms: linux/amd64,linux/arm64/v8
           build-args: |
-            alpine_tag=${{ inputs.alpine_tag }}
+            alpine_tag=${{ steps.prepare.outputs.alpine_tag }}
 
       - name: Push to ${{ env.REGISTRY }}/${{ env.REPOSITORY }}
         if: steps.build_image.outcome == 'success' && needs.select.outputs.push == 'true'
@@ -132,4 +141,4 @@ jobs:
           provenance: ${{ contains(env.REGISTRY, 'docker') }}
           platforms: linux/amd64,linux/arm64/v8
           build-args: |
-            alpine_tag=${{ inputs.alpine_tag }}
+            alpine_tag=${{ steps.prepare.outputs.alpine_tag }}
